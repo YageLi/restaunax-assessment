@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import ordersRouter from './routes/orders';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +17,10 @@ app.use('/api/orders', ordersRouter);
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Restaunax API is running' });
 });
+
+// Error handling - must be registered after all routes
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {

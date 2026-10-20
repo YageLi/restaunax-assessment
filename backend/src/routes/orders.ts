@@ -1,26 +1,35 @@
-import { Router, Request, Response } from 'express';
-import { Order } from '../../../shared/types';
-import { mockOrders } from '../data/mockOrders';
+import { Router, Request, Response, NextFunction } from 'express';
+import { ApiError, ApiResponse, Order, ORDER_STATUSES } from '../../../shared/types';
+import { findAllOrders } from '../repositories/orderRepository';
+import { isOrderStatus } from '../validation/orders';
 
 const router = Router();
 
-// TODO: Implement your data storage solution here
-// This starter uses in-memory storage with mock data
-// @ts-expect-error - This variable is for candidates to use when implementing endpoints
-let orders: Order[] = [...mockOrders];
-
 /**
  * GET /api/orders
- * List all orders, optionally filtered by status
+ * List all orders (newest first), optionally filtered by status
  * Query params: ?status=pending (optional)
+ *
+ * 200 - ApiResponse<Order[]>
+ * 400 - ApiError when status is not a valid OrderStatus
  */
-router.get('/', (_req: Request, res: Response) => {
-  // TODO: Implement this endpoint
-  // 1. Get the status query parameter if provided
-  // 2. Filter orders by status if query param exists
-  // 3. Return the filtered/all orders
+router.get('/', async (req: Request, res: Response<ApiResponse<Order[]> | ApiError>, next: NextFunction) => {
+  try {
+    const { status } = req.query;
 
-  res.status(501).json({ error: 'Not implemented yet' });
+    if (status !== undefined && !isOrderStatus(status)) {
+      res.status(400).json({
+        error: 'Invalid status',
+        message: `status must be one of: ${ORDER_STATUSES.join(', ')}`,
+      });
+      return;
+    }
+
+    res.json({ data: await findAllOrders({ status }) });
+  } catch (err) {
+    // Express 4 doesn't catch rejected promises, so forward errors to the error handler
+    next(err);
+  }
 });
 
 /**
