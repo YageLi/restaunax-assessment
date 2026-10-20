@@ -5,6 +5,13 @@
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered';
 
+/**
+ * Runtime list of valid statuses (in workflow order) for validating untrusted input.
+ * `satisfies` makes the compiler reject any entry that isn't an OrderStatus.
+ * Keep it in sync with OrderStatus when adding a new status.
+ */
+export const ORDER_STATUSES = ['pending', 'preparing', 'ready', 'delivered'] as const satisfies readonly OrderStatus[];
+
 export type OrderType = 'delivery' | 'pickup';
 
 export interface OrderItem {
@@ -33,6 +40,15 @@ export interface Order {
 }
 
 // API Response types
+
+/**
+ * Success envelope for all endpoints.
+ * Wrapping in `data` leaves room for metadata (e.g. pagination) without breaking clients.
+ */
+export interface ApiResponse<T> {
+  data: T;
+}
+
 export interface ApiError {
   error: string;
   message?: string;
